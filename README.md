@@ -2,7 +2,7 @@
 
 <img src="https://raw.githubusercontent.com/DavidValin/tinybackup/master/diagram.png"  alt="Tinybackup" />
 
-This is a simple bash shell script that creates and restores encrypted a folder backup using GPG.
+This is a simple bash shell script that creates and restores an encrypted backup using GPG.
 
 #### Install
 
