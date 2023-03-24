@@ -1,0 +1,57 @@
+#!/usr/bin/bash --
+
+# ------------------------------------------------------
+#  Simple GPG Backup
+#
+#  Author:  David Valin <hola@davidvalin.com>
+#  License: Apache License
+# ------------------------------------------------------
+
+backup () {
+  echo -e "\nBACKUP"
+  echo -e "__________________________________\n"
+  read -p "Location to backup: " backup_folder
+  read -p "Backup name: " BACKUP_NAME
+  read -p "PGP key id: " KEYID
+  echo "Starting backup, be patient...."
+  NOW=$(date +"%d%m%Y")
+  backup_name="$BACKUP_NAME.$NOW.tgz"
+  tar -czvf $backup_name $backup_folder
+  enc_output="$backup_name.enc"
+  secret $backup_name $enc_output
+  echo "Done!"
+  echo "  - ${enc_output}"
+}
+
+restore () {
+  echo -e "\nBACKUP RESTORE"
+  echo -e "__________________________________\n" 
+  read -p "Backup file (encrypted): " backup_file
+  read -p "Destination location: " backup_destination
+  read -p "PGP key id: " KEYID
+  echo "Starting restore, be patient...."
+  NOW=$(date +"%d%m%Y")
+  restored_file=original.tgz
+  final_location=$backup_destination/$restored_file
+  reveal $backup_file $restored_file
+  tar -xzvf $restored_file $final_location
+  echo "Done!"
+  echo "  - ${final_location}"
+}
+
+secret () {
+  gpg --encrypt --armor --output ${enc_output} --recipient $KEYID "${1}"
+}
+
+reveal () {
+  gpg --decrypt --output ${2} "${1}"
+}
+
+read -p "backup (b) or restore (r) ? " what_to_do
+
+if [ "$what_to_do" = "b" ]
+  then
+    backup "$@"; exit
+  else
+    restore "$@"; exit
+fi
