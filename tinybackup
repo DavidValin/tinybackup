@@ -11,14 +11,6 @@
 #
 # ------------------------------------------------------
 
-secret () {
-  gpg --encrypt --armor --recipient $1
-}
-
-reveal () {
-  gpg --decrypt --recipient $1 --output -
-}
-
 cmd=$1
 
 if [[ "$cmd" == "b" ]]; then
@@ -49,7 +41,7 @@ if [[ "$cmd" == "b" ]]; then
       echo ""
       mkdir -p $backup_destination_folder
       # using memory only, archive -> compress -> encrypt -> split
-      tar --absolute-names -cf - "$backup_folder" | gzip | pv | secret "$gpg_pub_key_id" | split -b 100M - "$backup_destination_folder/$enc_output."  
+      tar --absolute-names -cf - "$backup_folder" | gzip | pv | gpg --encrypt --armor --recipient "$gpg_pub_key_id" | split -b 100M - "$backup_destination_folder/$enc_output."  
     else
       echo "Exiting..."
       exit 1
@@ -82,7 +74,7 @@ if [[ "$cmd" == "r" ]]; then
     done
     echo ""
     echo " [x] Recover started at $NOW..."
-    cat "$backup_name."* | reveal "$gpg_private_key" | gunzip | tar -xf - -C "$recover_folder"
+    cat "$backup_name."* | gpg --decrypt --recipient "$gpg_private_key_id" --output - | gunzip | tar -xf - -C "$recover_root_folder"
     exit 1
 fi
 

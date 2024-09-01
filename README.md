@@ -8,8 +8,8 @@ This is a simple bash shell script that creates and restores an encrypted backup
 
 #### How to use it
 
-* backup: `tinybackup b /home/me/documents . documents.backup DEB57CCCFA38B9480AA241586979ABFE4443F61A`
-* recover: `tinybackup r documents.backup.*.tgz.gpg recovered_document.backup DEB57CCCFA38B9480AA241586979ABFE4443F61A`
+* backup: `tinybackup b <source_folder> <destination_folder> <backup_name> <gpg_key_id>`
+* recover: `tinybackup r <backup_name> <target_folder> <gpg_key_id>`
 
 <img src="https://raw.githubusercontent.com/DavidValin/tinybackup/master/diagram.png"  alt="Tinybackup" />
 
