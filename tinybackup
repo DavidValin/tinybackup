@@ -1,57 +1,80 @@
 #!/usr/bin/bash --
 
 # ------------------------------------------------------
-#  Simple GPG Backup
+# 
+#  tinybackup
+#  ~~~~~~~~~~
+#  the simplest GPG Folder Backup
 #
 #  Author:  David Valin <hola@davidvalin.com>
 #  License: Apache License
+#
 # ------------------------------------------------------
 
-backup () {
-  echo -e "\nBACKUP"
-  echo -e "__________________________________\n"
-  read -p "Location to backup: " backup_folder
-  read -p "Backup name: " BACKUP_NAME
-  read -p "PGP key id: " KEYID
-  echo "Starting backup, be patient...."
-  NOW=$(date +"%d%m%Y")
-  backup_name="$BACKUP_NAME.$NOW.tgz"
-  tar -czvf $backup_name $backup_folder
-  enc_output="$backup_name.enc"
-  secret $backup_name $enc_output
-  echo "Done!"
-  echo "  - ${enc_output}"
-}
+cmd=$1
 
-restore () {
-  echo -e "\nBACKUP RESTORE"
-  echo -e "__________________________________\n" 
-  read -p "Backup file (encrypted): " backup_file
-  read -p "Destination location: " backup_destination
-  read -p "PGP key id: " KEYID
-  echo "Starting restore, be patient...."
-  NOW=$(date +"%d%m%Y")
-  restored_file=original.tgz
-  final_location=$backup_destination/$restored_file
-  reveal $backup_file $restored_file
-  tar -xzvf $restored_file $final_location
-  echo "Done!"
-  echo "  - ${final_location}"
-}
+if [[ "$cmd" == "b" ]]; then
 
-secret () {
-  gpg --encrypt --armor --output ${enc_output} --recipient $KEYID "${1}"
-}
+    echo -e "\nBACKUP A FOLDER"
+    echo -e "__________________________________\n"
 
-reveal () {
-  gpg --decrypt --output ${2} "${1}"
-}
+    backup_folder=$2
+    backup_destination_folder=$3
+    backup_name=$4
+    gpg_pub_key_id=$5
+    NOW=$(date +"%Y%m%d.%H%M")
+    backup_name="$backup_name.$NOW.tgz"
+    enc_output="$backup_name.gpg"
 
-read -p "backup (b) or restore (r) ? " what_to_do
+    echo " [x] Backup mode set"
+    echo " [x] Folder to backup: $backup_folder"
+    echo " [x] GPG public key: $gpg_pub_key_id"
+    echo " [x] Backup destination folder: $backup_destination_folder"
+    echo " [x] Backup name: $backup_name"
+    echo ""
 
-if [ "$what_to_do" = "b" ]
-  then
-    backup "$@"; exit
-  else
-    restore "$@"; exit
+    read -p "    Press 'y' to continue or any other key to exit: " response
+
+    if [[ "$response" == "y" || "$response" == "Y" ]]; then
+      echo ""
+      echo " [x] Backup started at $NOW..."
+      echo ""
+      mkdir -p $backup_destination_folder
+      # using memory only, archive -> compress -> encrypt -> split
+      tar --absolute-names -cf - "$backup_folder" | gzip | pv | gpg --encrypt --armor --recipient "$gpg_pub_key_id" | split -b 100M - "$backup_destination_folder/$enc_output."  
+    else
+      echo "Exiting..."
+      exit 1
+    fi
+    exit 1
 fi
+
+if [[ "$cmd" == "r" ]]; then
+
+    echo -e "\nRECOVER FOLDER BACKUP"
+    echo -e "__________________________________\n"
+
+    backup_name=$2
+    recover_root_folder=$3
+    gpg_private_key_id=$4
+    NOW=$(date +"%Y%m%d.%H%M")
+
+    echo " [x] Recover mode set"
+    echo " [x] Recovering $backup_name..."
+    echo " [x] Recover root folder: $recover_root_folder"
+    echo " [x] GPG key: $gpg_private_key_id"
+    echo ""
+    echo " Input files:"
+
+    mkdir -p $recover_root_folder
+
+    # using memory only: read -> decrypt -> uncompress in target
+    for file in "$backup_name."*; do
+      echo "   $file"
+    done
+    echo ""
+    echo " [x] Recover started at $NOW..."
+    cat "$backup_name."* | gpg --decrypt --recipient "$gpg_private_key_id" --output - | gunzip | tar -xf - -C "$recover_root_folder"
+    exit 1
+fi
+
