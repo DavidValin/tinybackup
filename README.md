@@ -11,7 +11,7 @@ This is a simple bash shell script that creates and restores an encrypted backup
 * backup: `tinybackup b <source_folder> <destination_folder> <backup_name> <gpg_key_id>`
 * recover: `tinybackup r <backup_name> <target_folder> <gpg_key_id>`
 
-<img src="https://raw.githubusercontent.com/DavidValin/tinybackup/master/diagram.png"  alt="Tinybackup" />
+<img src="https://raw.githubusercontent.com/DavidValin/tinybackup/master/spec/flow-diagram.png"  alt="Tinybackup" />
 
 #### Dependencies
 
